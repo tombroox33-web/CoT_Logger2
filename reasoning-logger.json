@@ -1,0 +1,5 @@
+{
+    "enableEmbeddings": false,
+    "embedderModel": "all-MiniLM-L6-v2",
+    "dbPath": "reasoning_logs.db"
+}

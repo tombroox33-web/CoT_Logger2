@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasoning Logger</title>
+    <style>
+        body {
+            font-family: var(--vscode-font-family);
+            padding: 10px;
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-mode {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        input[type="text"] {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            padding: 6px;
+            border-radius: 2px;
+        }
+
+        button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="radio"]:disabled+label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #results {
+            margin-top: 10px;
+        }
+
+        .result-card {
+            border: 1px solid var(--vscode-panel-border);
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .result-file {
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+        }
+
+        .result-reasoning {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+        }
+
+        .result-footer {
+            display: flex;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .badge {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 2px 6px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            font-size: 0.8em;
+            padding: 2px 6px;
+        }
+
+        .diff-view {
+            display: none;
+            margin-top: 8px;
+            background-color: var(--vscode-textBlockQuote-background);
+            padding: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--vscode-descriptionForeground);
+            display: none;
+        }
+
+        /* Detail View Styles */
+        #detail-view {
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main-view">
+        <div class="search-container">
+            <div class="search-mode">
+                <label><input type="radio" name="mode" value="keyword" checked> Keyword</label>
+                <label title="Enable embeddings in configuration to use semantic search"><input type="radio" name="mode"
+                        value="semantic"> Semantic</label>
+            </div>
+            <input type="text" id="search-input" placeholder="Search reasoning logs...">
+            <button id="search-btn">Search</button>
+        </div>
+
+        <div id="loading" class="loading">Searching...</div>
+        <div id="results">
+            <div class="result-card">
+                <em>Enter a query to search logs.</em>
+            </div>
+        </div>
+    </div>
+
+    <div id="detail-view">
+        <div class="detail-header">
+            <button class="back-btn" onclick="goBack()">← Back</button>
+            <h3>Detail View</h3>
+        </div>
+        <div id="detail-content"></div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const resultsDiv = document.getElementById('results');
+        const loadingDiv = document.getElementById('loading');
+        const mainView = document.getElementById('main-view');
+        const detailView = document.getElementById('detail-view');
+        const detailContent = document.getElementById('detail-content');
+        const semanticRadio = document.querySelector('input[value="semantic"]');
+
+        searchBtn.addEventListener('click', () => {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const query = searchInput.value;
+            vscode.postMessage({
+                command: mode === 'semantic' ? 'searchSemantic' : 'searchKeyword',
+                query: query
+            });
+        });
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'initialize':
+                    if (!message.config.enableEmbeddings) {
+                        semanticRadio.disabled = true;
+                        semanticRadio.parentElement.title = 'Enable embeddings in configuration to use semantic search';
+                    } else {
+                        semanticRadio.disabled = false;
+                        semanticRadio.parentElement.title = '';
+                    }
+                    break;
+                case 'searchStarted':
+                    loadingDiv.style.display = 'block';
+                    resultsDiv.innerHTML = '';
+                    break;
+                case 'searchResults':
+                    loadingDiv.style.display = 'none';
+                    renderResults(message.results);
+                    break;
+                case 'searchError':
+                    loadingDiv.style.display = 'none';
+                    resultsDiv.innerHTML = `<div class="result-card" style="color: var(--vscode-errorForeground)">Error: ${message.error}</div>`;
+                    break;
+                case 'repairRefResult':
+                    showDetail(message.result);
+                    break;
+            }
+        });
+
+        function renderResults(results) {
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = '<div class="result-card"><em>No results found.</em></div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = results.map(result => createCardHtml(result)).join('');
+        }
+
+        function createCardHtml(result) {
+            return `
+                <div class="result-card">
+                    <div class="result-header">
+                        <span class="result-file">${result.file}</span>
+                        <span>${new Date(result.timestamp * 1000).toLocaleString()}</span>
+                    </div>
+                    <div class="result-reasoning">${escapeHtml(result.reasoning)}</div>
+                    <div class="result-footer">
+                        ${result.repair_ref.map(ref => `<span class="badge" onclick="openRepairRef(${ref})">#${ref}</span>`).join('')}
+                    </div>
+                    <div class="actions">
+                        <button class="btn-small" onclick="toggleDiff(${result.id})">Show Diff</button>
+                        <button class="btn-small" onclick="copyToClipboard('${escapeJs(result.reasoning)}')">Copy Text</button>
+                    </div>
+                    <div id="diff-${result.id}" class="diff-view">${escapeHtml(result.diff)}</div>
+                </div>
+            `;
+        }
+
+        function toggleDiff(id) {
+            const el = document.getElementById(`diff-${id}`);
+            if (el.style.display === 'none' || !el.style.display) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+        }
+
+        function openRepairRef(id) {
+            vscode.postMessage({
+                command: 'openRepairRef',
+                id: id
+            });
+        }
+
+        function showDetail(result) {
+            mainView.style.display = 'none';
+            detailView.style.display = 'block';
+            detailContent.innerHTML = createCardHtml(result);
+            // Auto-expand diff in detail view
+            toggleDiff(result.id);
+        }
+
+        function goBack() {
+            detailView.style.display = 'none';
+            mainView.style.display = 'block';
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeJs(unsafe) {
+            return unsafe.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+        }
+    </script>
+</body>
+
+</html>

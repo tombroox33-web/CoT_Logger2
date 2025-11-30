@@ -1,0 +1,171 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Reasoning Logger Schema",
+    "description": "Data contracts for the Reasoning Logger extension",
+    "definitions": {
+        "AgentOutput": {
+            "type": "object",
+            "description": "JSON contract expected from AI agents",
+            "required": [
+                "diff",
+                "reasoning",
+                "repair_ref"
+            ],
+            "properties": {
+                "diff": {
+                    "type": "string",
+                    "description": "Unified diff patch format"
+                },
+                "reasoning": {
+                    "type": "string",
+                    "description": "Concise explanation of the change"
+                },
+                "repair_ref": {
+                    "type": "array",
+                    "description": "Array of integer IDs referencing previous repairs (can be empty)",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "file": {
+                    "type": "string",
+                    "description": "Optional file path; if missing, extension will infer from context"
+                }
+            }
+        },
+        "DatabaseSchema": {
+            "type": "object",
+            "description": "SQLite table: reasoning",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "PRIMARY KEY, auto-increment"
+                },
+                "file": {
+                    "type": "string",
+                    "description": "File path or comma-separated list for multi-file diffs"
+                },
+                "diff": {
+                    "type": "string",
+                    "description": "Unified diff patch"
+                },
+                "reasoning": {
+                    "type": "string",
+                    "description": "AI reasoning explanation"
+                },
+                "timestamp": {
+                    "type": "number",
+                    "description": "Unix epoch timestamp (REAL)"
+                },
+                "repair_ref": {
+                    "type": "string",
+                    "description": "JSON array string of integer IDs"
+                },
+                "embedding": {
+                    "type": "string",
+                    "description": "BLOB - float32 vector bytes (optional, null if embeddings disabled)",
+                    "format": "binary"
+                },
+                "embedder_name": {
+                    "type": "string",
+                    "description": "Model name used for embedding (optional, for versioning)"
+                }
+            }
+        },
+        "ConfigSchema": {
+            "type": "object",
+            "description": "Extension configuration file: reasoning-logger.json",
+            "properties": {
+                "enableEmbeddings": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable semantic search via embeddings"
+                },
+                "embedderModel": {
+                    "type": "string",
+                    "default": "all-MiniLM-L6-v2",
+                    "description": "Sentence-transformers model name"
+                },
+                "dbPath": {
+                    "type": "string",
+                    "default": "reasoning_logs.db",
+                    "description": "Path to SQLite database file"
+                }
+            }
+        },
+        "QueryResponse": {
+            "type": "object",
+            "description": "JSON response from query scripts",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "file": {
+                                "type": "string"
+                            },
+                            "reasoning": {
+                                "type": "string"
+                            },
+                            "repair_ref": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "timestamp": {
+                                "type": "number"
+                            },
+                            "diff": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "WebviewInitMessage": {
+            "type": "object",
+            "description": "Message sent from extension to webview on initialization (Phase 6)",
+            "properties": {
+                "command": {
+                    "type": "string",
+                    "enum": [
+                        "initialize"
+                    ],
+                    "description": "Message type"
+                },
+                "config": {
+                    "type": "object",
+                    "properties": {
+                        "enableEmbeddings": {
+                            "type": "boolean",
+                            "description": "Whether embeddings are enabled in config"
+                        }
+                    }
+                }
+            }
+        },
+        "CheckEmbeddingsResponse": {
+            "type": "object",
+            "description": "Response from check_embeddings.py script (Phase 6)",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                },
+                "installed": {
+                    "type": "boolean",
+                    "description": "Whether sentence-transformers is installed"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Error message if check failed"
+                }
+            }
+        }
+    }
+}
