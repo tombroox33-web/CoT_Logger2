@@ -34,6 +34,11 @@ def query_semantic(args):
     db_path = config.get('dbPath', 'reasoning_logs.db')
     embedder_model = config.get('embedderModel', 'all-MiniLM-L6-v2')
     
+    # Resolve db_path relative to config file directory
+    config_dir = os.path.dirname(os.path.abspath(args.config))
+    if not os.path.isabs(db_path):
+        db_path = os.path.join(config_dir, db_path)
+    
     try:
         model = SentenceTransformer(embedder_model)
         query_embedding = model.encode(args.query)

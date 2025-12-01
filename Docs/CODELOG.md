@@ -59,3 +59,4 @@
 
 - [x] Fix "Extension path not found" error (Explicit path passing)
 - [x] Fix "Could not locate config" error (Graceful handling)
+- [x] Fix database path resolution (Scripts now resolve relative to config dir, not CWD)

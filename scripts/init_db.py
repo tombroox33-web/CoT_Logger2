@@ -13,8 +13,10 @@ def init_db(config_path):
     config = load_config(config_path)
     db_path = config.get('dbPath', 'reasoning_logs.db')
     
-    # Ensure db_path is absolute or relative to workspace root? 
-    # For now, we assume the script is run from workspace root or db_path is relative to CWD
+    # Resolve db_path relative to config file directory
+    config_dir = os.path.dirname(os.path.abspath(config_path))
+    if not os.path.isabs(db_path):
+        db_path = os.path.join(config_dir, db_path)
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

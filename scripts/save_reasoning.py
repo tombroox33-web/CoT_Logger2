@@ -23,6 +23,11 @@ def save_reasoning(args):
     db_path = config.get('dbPath', 'reasoning_logs.db')
     enable_embeddings = config.get('enableEmbeddings', False)
     embedder_model = config.get('embedderModel', 'all-MiniLM-L6-v2')
+    
+    # Resolve db_path relative to config file directory
+    config_dir = os.path.dirname(os.path.abspath(args.config))
+    if not os.path.isabs(db_path):
+        db_path = os.path.join(config_dir, db_path)
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

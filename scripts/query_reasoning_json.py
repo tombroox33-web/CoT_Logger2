@@ -13,6 +13,11 @@ def query_json(args):
     config = load_config(args.config)
     db_path = config.get('dbPath', 'reasoning_logs.db')
     
+    # Resolve db_path relative to config file directory
+    config_dir = os.path.dirname(os.path.abspath(args.config))
+    if not os.path.isabs(db_path):
+        db_path = os.path.join(config_dir, db_path)
+    
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row # Access columns by name
     cursor = conn.cursor()
