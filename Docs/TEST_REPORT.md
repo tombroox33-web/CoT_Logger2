@@ -82,3 +82,19 @@ Since the agent cannot interact with the VS Code UI directly, please perform the
 - [ ] **Toggle**: Select "Toggle Embeddings" and verify the setting changes in `reasoning-logger.json`.
 - [ ] **Open**: Select "Open Config File" and verify the JSON file opens.
 
+### 3.9 Clipboard Watcher (Auto-Logging)
+**Important**: This test must be run in the **Extension Development Host** window (the new window that opens when you press F5).
+
+1.  **Launch**: Press `F5` in your main VS Code window to launch the Extension Development Host.
+2.  **Setup**: In the *new* window, ensure a folder is open (File > Open Folder) so the database can be created.
+3.  **Activate**: Run command `Reasoning Logger: Toggle Clipboard Watcher`.
+    - Verify status bar shows: `$(eye) Reasoning Watcher: ON`
+4.  **Test**: Copy the following JSON block to your clipboard (Ctrl+C):
+    ```json
+    {"diff": "clipboard test", "reasoning": "auto-logged from clipboard", "repair_ref": []}
+    ```
+5.  **Verify**:
+    - Wait 1-2 seconds.
+    - A notification "Reasoning logged (ID: X)" should appear automatically.
+    - Check the Output panel ("Reasoning Logger") for confirmation.
+6.  **Negative Test**: Copy some random text. Verify NO notification appears.

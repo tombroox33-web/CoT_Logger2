@@ -20,6 +20,12 @@ export function setExtensionPath(path: string) {
     _extensionPath = path;
 }
 
+export function logToOutput(message: string) {
+    if (outputChannel) {
+        outputChannel.appendLine(message);
+    }
+}
+
 export async function runPythonScript(scriptNameOrCommand: string, args: string[]): Promise<PythonResult> {
     // Allow running direct python commands (e.g. --version) if scriptName starts with --
     // Otherwise assume it's a script in the scripts/ directory

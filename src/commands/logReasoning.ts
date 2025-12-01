@@ -59,7 +59,7 @@ export async function logReasoningCommand() {
         '--repair-ref', JSON.stringify(agentOutput.repair_ref)
     ];
 
-    const result = await runPythonScript('save_reasoning.py', args);
+    const result = await runPythonScript('save_entry.py', args);
 
     if (result.success && result.output) {
         try {
@@ -78,12 +78,27 @@ export async function logReasoningCommand() {
 }
 
 async function saveRaw(text: string) {
-    const result = await runPythonScript('save_raw.py', ['--text', text]);
+    // Determine file for raw save
+    let file = "unknown";
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+        file = vscode.workspace.asRelativePath(activeEditor.document.uri);
+    }
+
+    // Use save_entry.py with just reasoning (and file)
+    const args = [
+        '--file', file,
+        '--reasoning', text,
+        '--diff', '', // Empty diff
+        '--repair-ref', '[]'
+    ];
+
+    const result = await runPythonScript('save_entry.py', args);
     if (result.success && result.output) {
         try {
             const outputJson = JSON.parse(result.output);
             if (outputJson.success) {
-                vscode.window.showInformationMessage("Raw reasoning logged.");
+                vscode.window.showInformationMessage(`Raw reasoning logged (ID: ${outputJson.id}).`);
             } else {
                 vscode.window.showErrorMessage(`Error saving raw log: ${outputJson.error}`);
             }

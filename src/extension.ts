@@ -3,12 +3,17 @@ import { ReasoningLogProvider } from './sidebar/provider';
 import { logReasoningCommand } from './commands/logReasoning';
 import { configureCommand } from './commands/configure';
 import { runPythonScript, setOutputChannel, setExtensionPath } from './python/runner';
+import { logFromClipboardCommand, toggleClipboardWatcherCommand } from './commands/clipboardLogger';
+import { FileTracker } from './trackers/fileTracker';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel("Reasoning Logger");
 	setOutputChannel(outputChannel);
 	setExtensionPath(context.extensionPath);
 	outputChannel.appendLine('Reasoning Logger is activating...');
+
+	// Start File Tracker
+	FileTracker.getInstance().startWatching(context);
 
 	// Check for Python availability
 	const pythonCheck = await runPythonScript('--version', []);
@@ -45,6 +50,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('reasoning-logger.configure', () => configureCommand())
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('reasoning-logger.logFromClipboard', () => logFromClipboardCommand())
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('reasoning-logger.toggleClipboardWatcher', () => toggleClipboardWatcherCommand())
 	);
 }
 

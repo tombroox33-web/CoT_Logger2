@@ -37,6 +37,14 @@
       {
         "command": "reasoning-logger.configure",
         "title": "Configure Reasoning Logger"
+      },
+      {
+        "command": "reasoning-logger.logFromClipboard",
+        "title": "Log from Clipboard"
+      },
+      {
+        "command": "reasoning-logger.toggleClipboardWatcher",
+        "title": "Toggle Clipboard Watcher"
       }
     ]
   },
