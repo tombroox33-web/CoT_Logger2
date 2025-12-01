@@ -6,7 +6,7 @@ import { runPythonScript } from '../python/runner';
 export async function configureCommand() {
     const configPath = getConfigPath();
     if (!configPath) {
-        vscode.window.showErrorMessage("Could not locate reasoning-logger.json in workspace root.");
+        vscode.window.showErrorMessage("Please open a workspace folder to configure Reasoning Logger.");
         return;
     }
 

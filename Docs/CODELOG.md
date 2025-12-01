@@ -55,4 +55,7 @@
 - [x] Remove auto-generated activation event
 - [ ] Add performance logging (Deferred to future)
 
-**Coder sign-off**: Phase 6 complete. All critical and high-priority review items addressed.
+## Phase 7: Manual Testing Fixes
+
+- [x] Fix "Extension path not found" error (Explicit path passing)
+- [x] Fix "Could not locate config" error (Graceful handling)

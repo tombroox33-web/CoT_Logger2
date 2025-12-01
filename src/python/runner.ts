@@ -10,14 +10,17 @@ export interface PythonResult {
 }
 
 let outputChannel: vscode.OutputChannel | undefined;
+let _extensionPath: string | undefined;
 
 export function setOutputChannel(channel: vscode.OutputChannel) {
     outputChannel = channel;
 }
 
-export async function runPythonScript(scriptNameOrCommand: string, args: string[]): Promise<PythonResult> {
-    const extensionPath = vscode.extensions.getExtension('reasoning-logger')?.extensionPath;
+export function setExtensionPath(path: string) {
+    _extensionPath = path;
+}
 
+export async function runPythonScript(scriptNameOrCommand: string, args: string[]): Promise<PythonResult> {
     // Allow running direct python commands (e.g. --version) if scriptName starts with --
     // Otherwise assume it's a script in the scripts/ directory
     let pythonArgs: string[] = [];
@@ -25,10 +28,10 @@ export async function runPythonScript(scriptNameOrCommand: string, args: string[
     if (scriptNameOrCommand.startsWith('--')) {
         pythonArgs = [scriptNameOrCommand, ...args];
     } else {
-        if (!extensionPath) {
-            return { success: false, error: "Extension path not found" };
+        if (!_extensionPath) {
+            return { success: false, error: "Extension path not set. Call setExtensionPath() first." };
         }
-        const scriptPath = path.join(extensionPath, 'scripts', scriptNameOrCommand);
+        const scriptPath = path.join(_extensionPath, 'scripts', scriptNameOrCommand);
         const configPath = getConfigPath();
 
         pythonArgs = [scriptPath, ...args];

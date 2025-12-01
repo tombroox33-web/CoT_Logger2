@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import { ReasoningLogProvider } from './sidebar/provider';
 import { logReasoningCommand } from './commands/logReasoning';
 import { configureCommand } from './commands/configure';
-import { runPythonScript, setOutputChannel } from './python/runner';
+import { runPythonScript, setOutputChannel, setExtensionPath } from './python/runner';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel("Reasoning Logger");
 	setOutputChannel(outputChannel);
+	setExtensionPath(context.extensionPath);
 	outputChannel.appendLine('Reasoning Logger is activating...');
 
 	// Check for Python availability
